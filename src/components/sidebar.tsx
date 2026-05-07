@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -31,9 +31,21 @@ export function Sidebar({
   onLogout,
 }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(true)
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null)
   const pathname = usePathname()
   const router = useRouter()
+
+  // Track screen size to handle responsive behavior
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024)
+    }
+
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   const navigationItems =
     userRole === 'landlord'
@@ -133,9 +145,15 @@ export function Sidebar({
       {/* Sidebar */}
       <motion.aside
         initial={false}
-        animate={isOpen ? { x: 0 } : { x: -320 }}
+        animate={
+          isMobile
+            ? isOpen
+              ? { x: 0 }
+              : { x: -320 }
+            : { x: 0 }
+        }
         transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-        className="fixed left-0 top-0 z-40 h-screen w-80 bg-gradient-to-b from-background to-secondary border-r border-border flex flex-col shadow-xl lg:static lg:h-screen lg:w-80 lg:translate-x-0 lg:animate-none"
+        className="fixed left-0 top-0 z-40 h-screen w-80 bg-gradient-to-b from-background to-secondary border-r border-border flex flex-col shadow-xl lg:static lg:h-screen lg:w-80 lg:relative"
       >
         {/* Header */}
         <div className="p-6 border-b border-border">
@@ -248,7 +266,7 @@ export function Sidebar({
       </motion.aside>
 
       {/* Main Content Spacer for Desktop */}
-      <div className="hidden lg:block w-80" />
+      {!isMobile && <div className="w-80 shrink-0" />}
     </>
   )
 }
