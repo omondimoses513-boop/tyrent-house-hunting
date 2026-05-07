@@ -1,6 +1,7 @@
 'use client'
 
 import { ReactNode } from 'react'
+import { Toaster } from 'sonner'
 import { LayoutWrapper } from '@/components/layout-wrapper'
 
 interface RootLayoutClientProps {
@@ -8,5 +9,10 @@ interface RootLayoutClientProps {
 }
 
 export function RootLayoutClient({ children }: RootLayoutClientProps) {
-  return <LayoutWrapper>{children}</LayoutWrapper>
+  return (
+    <>
+      <LayoutWrapper>{children}</LayoutWrapper>
+      <Toaster position="top-right" />
+    </>
+  )
 }

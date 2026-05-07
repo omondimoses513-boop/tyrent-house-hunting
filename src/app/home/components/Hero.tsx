@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import Link from "next/link"
 import { useRouter } from 'next/navigation'
@@ -87,7 +88,11 @@ export default function Hero() {
     const isAllowed = userRole === 'LANDLORD' || userRole === 'ADMIN' || userRole === 'SUPER_ADMIN'
 
     if (!isAllowed) {
-      // Show warning to tenant
+      // Show toast and warning to tenant
+      toast.error('Landlord Account Required', {
+        description: 'You must have a landlord account to list properties. Please sign in or create a landlord account.',
+        duration: 4000,
+      })
       setShowTenantWarning(true)
       return
     }
