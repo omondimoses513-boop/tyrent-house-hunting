@@ -51,7 +51,7 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
     const userEmail = user?.email || 'user@example.com'
 
     return (
-      <div className="flex min-h-screen bg-background">
+      <div className="flex min-h-screen bg-background w-full">
         <Sidebar
           userRole={userRole}
           userName={userName}
@@ -61,7 +61,7 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
             window.location.href = '/auth/login'
           }}
         />
-        <main className="flex-1 w-full overflow-auto">
+        <main className="flex-1 min-h-screen w-full overflow-auto lg:ml-0">
           {children}
         </main>
       </div>

@@ -135,7 +135,7 @@ export function Sidebar({
         initial={false}
         animate={isOpen ? { x: 0 } : { x: -320 }}
         transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-        className="fixed left-0 top-0 z-40 h-screen w-80 bg-gradient-to-b from-background to-secondary border-r border-border flex flex-col shadow-xl lg:static lg:translate-x-0 lg:relative"
+        className="fixed left-0 top-0 z-40 h-screen w-80 bg-gradient-to-b from-background to-secondary border-r border-border flex flex-col shadow-xl lg:static lg:h-screen lg:w-80 lg:translate-x-0 lg:animate-none"
       >
         {/* Header */}
         <div className="p-6 border-b border-border">
