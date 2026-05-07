@@ -18,7 +18,7 @@ import {
 import { Button } from '@/components/ui/button'
 
 interface SidebarProps {
-  userRole?: 'landlord' | 'tenant'
+  userRole?: 'landlord' | 'tenant' | 'super_admin'
   userName?: string
   userEmail?: string
   onLogout: () => void
@@ -31,21 +31,23 @@ export function Sidebar({
   onLogout,
 }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const [isMobile, setIsMobile] = useState(true)
+  const [isMobile, setIsMobile] = useState(false)
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null)
   const pathname = usePathname()
   const router = useRouter()
 
-  // Track screen size to handle responsive behavior
+  // Track screen size to differentiate mobile vs desktop
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 1024)
-    }
-
+    const checkMobile = () => setIsMobile(window.innerWidth < 1024)
     checkMobile()
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
+
+  // Close mobile menu when switching to desktop
+  useEffect(() => {
+    if (!isMobile) setIsOpen(false)
+  }, [isMobile])
 
   const navigationItems =
     userRole === 'landlord'
@@ -66,48 +68,61 @@ export function Sidebar({
             ],
           },
           {
-            label: 'Bookings',
-            icon: MapPin,
-            href: '/landlord/bookings',
-            children: [],
-          },
-          {
-            label: 'Settings',
-            icon: Settings,
-            href: '/landlord/settings',
+            label: 'Profile',
+            icon: User,
+            href: '/landlord/profile',
             children: [],
           },
         ]
-      : [
-          {
-            label: 'Dashboard',
-            icon: LayoutDashboard,
-            href: '/tenant/dashboard',
-            children: [],
-          },
-          {
-            label: 'Bookings',
-            icon: MapPin,
-            href: '/tenant/bookings',
-            children: [],
-          },
-          {
-            label: 'Favorites',
-            icon: Building2,
-            href: '/tenant/favorites',
-            children: [],
-          },
-          {
-            label: 'Settings',
-            icon: Settings,
-            href: '/tenant/settings',
-            children: [],
-          },
-        ]
+      : userRole === 'super_admin'
+        ? [
+            {
+              label: 'Dashboard',
+              icon: LayoutDashboard,
+              href: '/admin/dashboard',
+              children: [],
+            },
+            {
+              label: 'Properties',
+              icon: Building2,
+              href: '/admin/properties',
+              children: [],
+            },
+            {
+              label: 'Settings',
+              icon: Settings,
+              href: '/admin/settings',
+              children: [],
+            },
+          ]
+        : [
+            {
+              label: 'Dashboard',
+              icon: LayoutDashboard,
+              href: '/tenant/dashboard',
+              children: [],
+            },
+            {
+              label: 'Bookings',
+              icon: MapPin,
+              href: '/tenant/bookings',
+              children: [],
+            },
+            {
+              label: 'Favorites',
+              icon: Building2,
+              href: '/tenant/favorites',
+              children: [],
+            },
+            {
+              label: 'Settings',
+              icon: Settings,
+              href: '/tenant/settings',
+              children: [],
+            },
+          ]
 
-  const isActive = (href: string) => {
-    return pathname?.startsWith(href)
-  }
+  const isActive = (href: string) => pathname?.startsWith(href)
 
   const handleLogout = () => {
     onLogout()
@@ -118,9 +133,122 @@ export function Sidebar({
     setExpandedMenu(expandedMenu === label ? null : label)
   }
 
+  const sidebarContent = (
+    <>
+      {/* Header */}
+      <div className="p-6 border-b border-border">
+        <h1 className="text-2xl font-bold text-primary font-montserrat">Tyrent</h1>
+        <p className="text-xs text-muted-foreground mt-1 font-nunito">House Hunting</p>
+      </div>
+
+      {/* User Profile */}
+      <div className="p-4 border-b border-border">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-white">
+            <User size={20} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-foreground font-nunito">{userName}</p>
+            <p className="text-xs text-muted-foreground font-nunito truncate">{userEmail}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto py-4 px-3">
+        {navigationItems.map((item) => {
+          const Icon = item.icon
+          const hasChildren = item.children && item.children.length > 0
+          const itemIsActive = isActive(item.href)
+          const menuIsExpanded = expandedMenu === item.label
+
+          return (
+            <div key={item.label}>
+              {hasChildren ? (
+                <button
+                  onClick={() => toggleMenu(item.label)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 font-nunito font-medium ${
+                    itemIsActive
+                      ? 'bg-primary/15 text-primary shadow-sm'
+                      : 'text-foreground hover:bg-secondary/50'
+                  }`}
+                >
+                  <Icon size={20} />
+                  <span className="flex-1 text-left">{item.label}</span>
+                  <motion.div
+                    animate={{ rotate: menuIsExpanded ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ChevronDown size={18} />
+                  </motion.div>
+                </button>
+              ) : (
+                <Link
+                  href={item.href}
+                  onClick={() => setIsOpen(false)}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 font-nunito font-medium ${
+                    itemIsActive
+                      ? 'bg-primary/15 text-primary shadow-sm'
+                      : 'text-foreground hover:bg-secondary/50'
+                  }`}
+                >
+                  <Icon size={20} />
+                  <span>{item.label}</span>
+                </Link>
+              )}
+
+              {/* Submenu */}
+              <AnimatePresence>
+                {hasChildren && menuIsExpanded && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    {item.children?.map((child) => {
+                      const childIsActive = isActive(child.href)
+                      return (
+                        <Link
+                          key={child.href}
+                          href={child.href}
+                          onClick={() => setIsOpen(false)}
+                          className={`block px-4 py-2 pl-12 text-sm rounded-lg transition-colors duration-200 font-nunito ${
+                            childIsActive
+                              ? 'text-primary font-semibold'
+                              : 'text-muted-foreground hover:text-foreground'
+                          }`}
+                        >
+                          {child.label}
+                        </Link>
+                      )
+                    })}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )
+        })}
+      </nav>
+
+      {/* Logout Button */}
+      <div className="p-4 border-t border-border">
+        <Button
+          onClick={handleLogout}
+          variant="outline"
+          className="w-full gap-2 font-nunito"
+        >
+          <LogOut size={18} />
+          Logout
+        </Button>
+      </div>
+    </>
+  )
+
   return (
     <>
-      {/* Mobile Menu Button */}
+      {/* Mobile Menu Toggle Button — only visible on mobile */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg hover:bg-primary/90 transition-colors"
@@ -129,144 +257,43 @@ export function Sidebar({
         {isOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
 
-      {/* Mobile Overlay */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setIsOpen(false)}
-            className="fixed inset-0 bg-black/50 z-30 lg:hidden"
-          />
-        )}
-      </AnimatePresence>
+      {/* Mobile: animated sidebar + overlay */}
+      {isMobile && (
+        <>
+          <AnimatePresence>
+            {isOpen && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsOpen(false)}
+                className="fixed inset-0 bg-black/50 z-30"
+              />
+            )}
+          </AnimatePresence>
 
-      {/* Sidebar */}
-      <motion.aside
-        initial={false}
-        animate={
-          isMobile
-            ? isOpen
-              ? { x: 0 }
-              : { x: -320 }
-            : { x: 0 }
-        }
-        transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-        className="fixed left-0 top-0 z-40 h-screen w-80 bg-gradient-to-b from-background to-secondary border-r border-border flex flex-col shadow-xl lg:static lg:h-screen lg:w-80 lg:relative"
-      >
-        {/* Header */}
-        <div className="p-6 border-b border-border">
-          <h1 className="text-2xl font-bold text-primary font-montserrat">Tyrent</h1>
-          <p className="text-xs text-muted-foreground mt-1 font-nunito">House Hunting</p>
-        </div>
+          <AnimatePresence>
+            {isOpen && (
+              <motion.aside
+                initial={{ x: -320 }}
+                animate={{ x: 0 }}
+                exit={{ x: -320 }}
+                transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+                className="fixed left-0 top-0 z-40 h-screen w-80 bg-gradient-to-b from-background to-secondary border-r border-border flex flex-col shadow-xl"
+              >
+                {sidebarContent}
+              </motion.aside>
+            )}
+          </AnimatePresence>
+        </>
+      )}
 
-        {/* User Profile */}
-        <div className="p-4 border-b border-border">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-white">
-              <User size={20} />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-foreground font-nunito">{userName}</p>
-              <p className="text-xs text-muted-foreground font-nunito truncate">{userEmail}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto py-4 px-3">
-          {navigationItems.map((item) => {
-            const Icon = item.icon
-            const hasChildren = item.children && item.children.length > 0
-            const itemIsActive = isActive(item.href)
-            const menuIsExpanded = expandedMenu === item.label
-
-            return (
-              <div key={item.label}>
-                {hasChildren ? (
-                  <button
-                    onClick={() => toggleMenu(item.label)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 font-nunito font-medium ${
-                      itemIsActive
-                        ? 'bg-primary/15 text-primary shadow-sm'
-                        : 'text-foreground hover:bg-secondary/50'
-                    }`}
-                  >
-                    <Icon size={20} />
-                    <span className="flex-1 text-left">{item.label}</span>
-                    <motion.div
-                      animate={{ rotate: menuIsExpanded ? 180 : 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <ChevronDown size={18} />
-                    </motion.div>
-                  </button>
-                ) : (
-                  <Link
-                    href={item.href}
-                    onClick={() => setIsOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 font-nunito font-medium ${
-                      itemIsActive
-                        ? 'bg-primary/15 text-primary shadow-sm'
-                        : 'text-foreground hover:bg-secondary/50'
-                    }`}
-                  >
-                    <Icon size={20} />
-                    <span>{item.label}</span>
-                  </Link>
-                )}
-
-                {/* Submenu */}
-                <AnimatePresence>
-                  {hasChildren && menuIsExpanded && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="overflow-hidden"
-                    >
-                      {item.children?.map((child) => {
-                        const childIsActive = isActive(child.href)
-                        return (
-                          <Link
-                            key={child.href}
-                            href={child.href}
-                            onClick={() => setIsOpen(false)}
-                            className={`block px-4 py-2 pl-12 text-sm rounded-lg transition-colors duration-200 font-nunito ${
-                              childIsActive
-                                ? 'text-primary font-semibold'
-                                : 'text-muted-foreground hover:text-foreground'
-                            }`}
-                          >
-                            {child.label}
-                          </Link>
-                        )
-                      })}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            )
-          })}
-        </nav>
-
-        {/* Logout Button */}
-        <div className="p-4 border-t border-border">
-          <Button
-            onClick={handleLogout}
-            variant="outline"
-            className="w-full gap-2 font-nunito"
-          >
-            <LogOut size={18} />
-            Logout
-          </Button>
-        </div>
-      </motion.aside>
-
-      {/* Main Content Spacer for Desktop */}
-      {!isMobile && <div className="w-80 shrink-0" />}
+      {/* Desktop: always-visible static sidebar */}
+      {!isMobile && (
+        <aside className="hidden lg:flex flex-col h-screen w-80 sticky top-0 bg-gradient-to-b from-background to-secondary border-r border-border shadow-xl">
+          {sidebarContent}
+        </aside>
+      )}
     </>
   )
 }
