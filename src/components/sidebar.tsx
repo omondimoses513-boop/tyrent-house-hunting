@@ -17,7 +17,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
-interface SidebarProps {
+export interface SidebarProps {
   userRole?: 'landlord' | 'tenant' | 'super_admin'
   userName?: string
   userEmail?: string
