@@ -46,7 +46,14 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
 
   // Dashboard/protected pages: sidebar + content
   if (isSidebarRoute) {
-    const userRole = user?.role === 'LANDLORD' ? 'landlord' : 'tenant'
+    let userRole: 'landlord' | 'tenant' | 'super_admin' = 'tenant'
+    
+    if (user?.role === 'LANDLORD') {
+      userRole = 'landlord'
+    } else if (user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN') {
+      userRole = 'super_admin'
+    }
+    
     const userName = user?.fullName || user?.username || 'User'
     const userEmail = user?.email || 'user@example.com'
 
